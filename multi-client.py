@@ -8,7 +8,7 @@ import threading
 NODES = 72
 b = threading.Barrier(NODES + 1)
 host = socket.gethostbyname(sys.argv[1])
-port = int(sys.argv[2])
+port = 6572
 BUFFER_SIZE = 20
 RETAIN = 100
 
@@ -37,11 +37,9 @@ class Client:
                     b.wait()
                 else:
                     while not self.client.state[self.clientNum]:
-                        print("Am I stuck here?")
                         self.soc.recv(BUFFER_SIZE)
                         b.wait()
                     self.TS  = int(self.soc.recv(BUFFER_SIZE).decode("utf-8"))
-
                 if self.client.exit:
                     self.soc.send("exit".encode("utf-8"))
                     break

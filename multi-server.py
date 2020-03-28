@@ -7,8 +7,8 @@ import time
 PORT = 6572
 BUFFER_SIZE = 20  # Usually 1024, but we need quick response
 NODES = 72
-RETAIN = 1000
-SLEEP = 0.2
+RETAIN = 100
+SLEEP = 1
 event = Event()
 
 # Multithreaded Python server : TCP Server Socket Thread Pool
@@ -40,6 +40,7 @@ class Server:
     class ClearThread(Thread):
 
         def __init__(self, features):
+            Thread.__init__(self)
             self.s = 0
             self.e = RETAIN//2
             self.features = features
@@ -63,13 +64,15 @@ class Server:
 
     class SendTSReply(Thread):
         
-        def __init__(self, client):
+        def __init__(self, server):
+            Thread.__init__(self)
             self.server = server
 
         def run(self):
+            time.sleep(0.5)
             while True:
                 time.sleep(SLEEP)
-                for i,x in enumerate(self.server.features[self.server.serverTS]:
+                for i,x in enumerate(self.server.features[self.server.serverTS]):
                     if not x:
                         self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
            
@@ -99,7 +102,7 @@ class Server:
         for _ in range(2000):
             time.sleep(SLEEP)
             row = self.serverTS
-            print(self.features[row])
+            print(row, self.features[row])
             self.serverTS += 1
             if self.serverTS == RETAIN:
                 self.serverTS = 0
