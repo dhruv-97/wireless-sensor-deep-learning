@@ -9,7 +9,9 @@ BUFFER_SIZE = 20  # Usually 1024, but we need quick response
 NODES = 72
 RETAIN = 100
 SLEEP = 1
+ALPHA = 0.7
 event = Event()
+
 
 # Multithreaded Python server : TCP Server Socket Thread Pool
 
@@ -27,13 +29,15 @@ class Server:
 
         def run(self):
             self.conn.send("go".encode("utf-8"))
+            BETA = 1 - ALPHA
             while True:
                 data = self.conn.recv(BUFFER_SIZE).decode("utf-8")
                 TS, feature = [int(x) for x in data.split(',')]
+                if TS == -1:
+                    break
                 self.server.clientTS = max(self.server.clientTS, TS) if TS else 0
                 self.server.features[TS][self.clientNum] = feature
-                if data == 'exit':
-                    break
+                self.server.predicted[(TS+1)%RETAIN][self.clientNum] = int(feature * ALPHA + self.server.predicted[TS][self.clientNum] * BETA)
             self.conn.close()
 
 
@@ -62,7 +66,7 @@ class Server:
                 self.e  = self.s
                 self.s = 0
 
-    class SendTSReply(Thread):
+    class QueryGenerator(Thread):
         
         def __init__(self, server):
             Thread.__init__(self)
@@ -74,10 +78,12 @@ class Server:
                 time.sleep(SLEEP)
                 for i,x in enumerate(self.server.features[self.server.serverTS]):
                     if not x:
+                        self.server.predicted[(self.server.serverTS+1)%RETAIN][i] = self.server.features[self.server.serverTS][i] = self.server.predicted[self.server.serverTS][i]
                         self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
-           
+                print(self.server.features[self.server.serverTS])
     def __init__(self):
-        self.features = [[None] * NODES for _ in range(RETAIN)]
+        self.features = [[0] * NODES for _ in range(RETAIN)]
+        self.predicted = [[0] * NODES for _ in range(RETAIN)]
         self.state = [True] * NODES
         self.threads = []
         self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -95,14 +101,13 @@ class Server:
         self.threads.sort(key=lambda x: x.clientNum)
         clear_thread = Server.ClearThread(self.features)
         clear_thread.start()
-        reply_thread = Server.SendTSReply(self)
-        reply_thread.start()
+        query_generator = Server.QueryGenerator(self)
+        query_generator.start()
         for t in self.threads:
             t.start()
         for _ in range(2000):
             time.sleep(SLEEP)
             row = self.serverTS
-            print(row, self.features[row])
             self.serverTS += 1
             if self.serverTS == RETAIN:
                 self.serverTS = 0
@@ -111,7 +116,7 @@ class Server:
                 event.set()
         for t in self.threads:
             t.join()
-        reply_thread.join()
+        query_generator.join()
         clear_thread.join()
         self.soc.close()
 

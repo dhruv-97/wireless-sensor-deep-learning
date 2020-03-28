@@ -41,7 +41,7 @@ class Client:
                         b.wait()
                     self.TS  = int(self.soc.recv(BUFFER_SIZE).decode("utf-8"))
                 if self.client.exit:
-                    self.soc.send("exit".encode("utf-8"))
+                    self.soc.send("-1,-1".encode("utf-8"))
                     break
 
             self.soc.close()
