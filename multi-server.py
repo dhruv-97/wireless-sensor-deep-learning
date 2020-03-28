@@ -1,13 +1,15 @@
 import socket
 import sys
-from threading import Thread
+from threading import Thread, Event
 import time
 
 # Multithreaded Python server : TCP Server Socket Program Stub
-PORT = int(sys.argv[1])
+PORT = 6572
 BUFFER_SIZE = 20  # Usually 1024, but we need quick response
 NODES = 72
-
+RETAIN = 1000
+SLEEP = 0.2
+event = Event()
 
 # Multithreaded Python server : TCP Server Socket Thread Pool
 
@@ -29,15 +31,38 @@ class Server:
                 data = self.conn.recv(BUFFER_SIZE).decode("utf-8")
                 TS, feature = [int(x) for x in data.split(',')]
                 self.server.clientTS = max(self.server.clientTS, TS)
-                self.server.features[TS%1000][self.clientNum] = feature
+                self.server.features[TS%RETAIN][self.clientNum] = feature
                 if data == 'exit':
                     break
             self.conn.close()
 
 
+    class ClearThread(Thread):
+
+        def __init__(self, features):
+            self.s = 0
+            self.e = RETAIN//2
+            self.features = features
+
+        def run(self):
+            while True:
+                event.wait() 
+                for i in range(self.s, self.e):
+                    for j in range(NODES):
+                        self.features[i][j] = None
+                self.swap()
+                event.clear()
+
+        def swap(self):
+            if self.s:
+                self.s = self.e
+                self.e = RETAIN
+            else:
+                self.e  = self.s
+                self.s = 0
 
     def __init__(self):
-        self.features = [[None] * NODES for _ in range(1000)]
+        self.features = [[None] * NODES for _ in range(RETAIN)]
         self.state = [True] * NODES
         self.threads = []
         self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -53,15 +78,17 @@ class Server:
             (conn, (ip, port)) = self.soc.accept()
             self.threads.append(Server.ClientThread(self, conn, ip, port))
         self.threads.sort(key=lambda x: x.clientNum)
+        clear_thread = Server.ClearThread(self.features)
+        clear_thread.start()
         for t in self.threads:
             t.start()
         for _ in range(2000):
-            time.sleep(0.2)
-            row = self.serverTS%1000
+            time.sleep(SLEEP)
+            row = self.serverTS%RETAIN
             print(self.features[row])
             for i,x in enumerate(self.features[row]):
                 if not x:
-                    print(self.clientTS)
+                    #print(self.clientTS)
                     self.threads[i].conn.send(str(self.clientTS).encode("utf-8"))
             self.serverTS += 1
         for t in self.threads:
