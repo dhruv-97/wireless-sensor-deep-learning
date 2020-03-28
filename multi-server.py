@@ -30,8 +30,8 @@ class Server:
             while True:
                 data = self.conn.recv(BUFFER_SIZE).decode("utf-8")
                 TS, feature = [int(x) for x in data.split(',')]
-                self.server.clientTS = max(self.server.clientTS, TS)
-                self.server.features[TS%RETAIN][self.clientNum] = feature
+                self.server.clientTS = max(self.server.clientTS, TS) if TS else 0
+                self.server.features[TS][self.clientNum] = feature
                 if data == 'exit':
                     break
             self.conn.close()
@@ -61,6 +61,18 @@ class Server:
                 self.e  = self.s
                 self.s = 0
 
+    class SendTSReply(Thread):
+        
+        def __init__(self, client):
+            self.server = server
+
+        def run(self):
+            while True:
+                time.sleep(SLEEP)
+                for i,x in enumerate(self.server.features[self.server.serverTS]:
+                    if not x:
+                        self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
+           
     def __init__(self):
         self.features = [[None] * NODES for _ in range(RETAIN)]
         self.state = [True] * NODES
@@ -80,20 +92,24 @@ class Server:
         self.threads.sort(key=lambda x: x.clientNum)
         clear_thread = Server.ClearThread(self.features)
         clear_thread.start()
+        reply_thread = Server.SendTSReply(self)
+        reply_thread.start()
         for t in self.threads:
             t.start()
         for _ in range(2000):
             time.sleep(SLEEP)
-            row = self.serverTS%RETAIN
+            row = self.serverTS
             print(self.features[row])
-            for i,x in enumerate(self.features[row]):
-                if not x:
-                    #print(self.clientTS)
-                    self.threads[i].conn.send(str(self.clientTS).encode("utf-8"))
             self.serverTS += 1
+            if self.serverTS == RETAIN:
+                self.serverTS = 0
+                event.set()
+            elif self.serverTS == RETAIN//2:
+                event.set()
         for t in self.threads:
             t.join()
-
+        reply_thread.join()
+        clear_thread.join()
         self.soc.close()
 
 
