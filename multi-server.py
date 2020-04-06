@@ -2,6 +2,8 @@ import socket
 import sys
 from threading import Thread, Event
 import time
+import tensorflow as tf
+import numpy as np
 
 # Multithreaded Python server : TCP Server Socket Program Stub
 PORT = 6572
@@ -13,6 +15,7 @@ ALPHA = 0.7
 event = Event()
 
 
+model = tf.keras.models.load_model('saved_model/cnn-model-2')
 # Multithreaded Python server : TCP Server Socket Thread Pool
 
 class Server:
@@ -81,6 +84,8 @@ class Server:
                         self.server.predicted[(self.server.serverTS+1)%RETAIN][i] = self.server.features[self.server.serverTS][i] = self.server.predicted[self.server.serverTS][i]
                         self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
                 print(self.server.features[self.server.serverTS])
+                predictedY = model.predict(np.array([self.server.features[self.server.serverTS]]).reshape(1,8,9))
+                print(np.argmax(predictedY[0]))
     def __init__(self):
         self.features = [[0] * NODES for _ in range(RETAIN)]
         self.predicted = [[0] * NODES for _ in range(RETAIN)]

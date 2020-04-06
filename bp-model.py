@@ -33,7 +33,7 @@ model.add(layers.Dense(10)) #Replace 10 by 30 if doing for 30 classes
 model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
-history = model.fit(train_X_normalized, train_Y, validation_split = 0.3, epochs=2)
+history = model.fit(train_X_normalized, train_Y, validation_split = 0.3, epochs=10)
 model.save('./saved_model/bp-model')
 test_loss, test_acc = model.evaluate(test_X_normalized,  test_Y, verbose=2)
 

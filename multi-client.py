@@ -82,7 +82,7 @@ class Client:
         command_thread = Client.CommandThread(self)
         command_thread.start()
         f = open(
-            "./WTD_upload/Toluene_200/L1/201106121329_board_setPoint_400V_fan_setPoint_000_mfc_setPoint_Toluene_200ppm_p1")
+            "./WTD_upload/Benzene_200/L1/201105161650_board_setPoint_600V_fan_setPoint_060_mfc_setPoint_Benzene_200ppm_p1")
         for j, line in enumerate(f):
 
             self.row = j
