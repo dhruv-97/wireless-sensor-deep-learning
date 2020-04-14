@@ -1,5 +1,4 @@
 import socket
-import sys
 from threading import Thread, Event
 import time
 import tensorflow as tf
@@ -74,18 +73,28 @@ class Server:
         def __init__(self, server):
             Thread.__init__(self)
             self.server = server
+            self.total = 0
+            self.correct = 0
 
         def run(self):
-            time.sleep(0.3)
-            while True:
+            time.sleep(0.5)
+            for _ in range(1000):
                 time.sleep(SLEEP)
                 for i,x in enumerate(self.server.features[self.server.serverTS]):
                     if not x:
                         self.server.predicted[(self.server.serverTS+1)%RETAIN][i] = self.server.features[self.server.serverTS][i] = self.server.predicted[self.server.serverTS][i]
                         self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
-                print(self.server.features[self.server.serverTS])
+                self.total += 1
                 predictedY = model.predict(np.array([self.server.features[self.server.serverTS][:NODES-1]]).reshape(1,8,9))
-                print("Predicted = ", np.argmax(predictedY[0]), ", Actual = ", self.server.features[self.server.serverTS][NODES-1])
+                predicted, actual = np.argmax(predictedY[0]), self.server.features[self.server.serverTS][NODES-1]//3
+                if predicted == actual:
+                    self.correct += 1
+                print(self.server.features[self.server.serverTS])
+                print("Predicted = ", predicted , ", Actual = ", actual)
+
+        def totalAccuracy(self):
+            return self.total/self.correct
+
     def __init__(self):
         self.features = [[0] * NODES for _ in range(RETAIN)]
         self.predicted = [[0] * NODES for _ in range(RETAIN)]
@@ -119,6 +128,7 @@ class Server:
                 event.set()
             elif self.serverTS == RETAIN//2:
                 event.set()
+        print(query_generator.totalAccuracy())
         for t in self.threads:
             t.join()
         query_generator.join()

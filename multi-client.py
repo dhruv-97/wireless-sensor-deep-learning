@@ -91,7 +91,7 @@ class Client:
             if self.exit:
                 break
             time.sleep(1)
-
+        self.exit = True
         command_thread.join()
         for thread in self.threads:
             thread.join()
