@@ -12,7 +12,6 @@ for line in f:
 	sec  =  int(data[0])
 	fan = int(data[1])
 	for j in range(10):
-		k1 = 
 		csv[j].append([date, time, sec, fan] + [data[i] for i in range(10*(j+1) + 2 - j, 10*(j+1) + 10 - j)])
 	break
 for j in range(10):

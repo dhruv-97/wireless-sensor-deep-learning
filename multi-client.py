@@ -5,9 +5,10 @@ import sys
 import time
 import threading
 
-NODES = 72
+NODES = 73
 b = threading.Barrier(NODES + 1)
 host = socket.gethostbyname(sys.argv[1])
+# crashed = sys.argv[2]
 port = 6572
 BUFFER_SIZE = 20
 RETAIN = 100
@@ -67,8 +68,8 @@ class Client:
 
     def __init__(self, NODES):
         self.NODES = NODES
+        # self.state = [True if i >= crashed else False for i in range(NODES)]
         self.state = [True] * NODES
-        self.row = None
         self.data = None
         self.threads = []
         self.exit = False
@@ -82,12 +83,10 @@ class Client:
         command_thread = Client.CommandThread(self)
         command_thread.start()
         f = open(
-            "./WTD_upload/Benzene_200/L1/201105161650_board_setPoint_600V_fan_setPoint_060_mfc_setPoint_Benzene_200ppm_p1")
+            "./test.txt")
         for j, line in enumerate(f):
-
-            self.row = j
-            data = line.split("\t")
-            self.data = [data[i] for i in range(12, 92) if data[i] != '1']
+            self.data = [x for x in line.split(",")]
+            self.data[0], self.data[self.NODES] = self.data[self.NODES], self.data[0]
             b.wait()
             if self.exit:
                 break

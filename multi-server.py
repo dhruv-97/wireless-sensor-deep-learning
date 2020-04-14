@@ -8,7 +8,7 @@ import numpy as np
 # Multithreaded Python server : TCP Server Socket Program Stub
 PORT = 6572
 BUFFER_SIZE = 20  # Usually 1024, but we need quick response
-NODES = 72
+NODES = 73
 RETAIN = 100
 SLEEP = 1
 ALPHA = 0.7
@@ -84,8 +84,8 @@ class Server:
                         self.server.predicted[(self.server.serverTS+1)%RETAIN][i] = self.server.features[self.server.serverTS][i] = self.server.predicted[self.server.serverTS][i]
                         self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
                 print(self.server.features[self.server.serverTS])
-                predictedY = model.predict(np.array([self.server.features[self.server.serverTS]]).reshape(1,8,9))
-                print(np.argmax(predictedY[0]))
+                predictedY = model.predict(np.array([self.server.features[self.server.serverTS][:NODES-1]]).reshape(1,8,9))
+                print("Predicted = ", np.argmax(predictedY[0]), ", Actual = ", self.server.features[self.server.serverTS][NODES])
     def __init__(self):
         self.features = [[0] * NODES for _ in range(RETAIN)]
         self.predicted = [[0] * NODES for _ in range(RETAIN)]
