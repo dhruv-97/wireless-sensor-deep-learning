@@ -86,7 +86,7 @@ class Client:
             "./test.txt")
         for j, line in enumerate(f):
             self.data = [x for x in line.split(",")]
-            self.data[0], self.data[self.NODES] = self.data[self.NODES], self.data[0]
+            self.data[0], self.data[self.NODES-1] = self.data[self.NODES-1], self.data[0]
             b.wait()
             if self.exit:
                 break

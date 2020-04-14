@@ -76,7 +76,7 @@ class Server:
             self.server = server
 
         def run(self):
-            time.sleep(0.5)
+            time.sleep(0.3)
             while True:
                 time.sleep(SLEEP)
                 for i,x in enumerate(self.server.features[self.server.serverTS]):
@@ -85,7 +85,7 @@ class Server:
                         self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
                 print(self.server.features[self.server.serverTS])
                 predictedY = model.predict(np.array([self.server.features[self.server.serverTS][:NODES-1]]).reshape(1,8,9))
-                print("Predicted = ", np.argmax(predictedY[0]), ", Actual = ", self.server.features[self.server.serverTS][NODES])
+                print("Predicted = ", np.argmax(predictedY[0]), ", Actual = ", self.server.features[self.server.serverTS][NODES-1])
     def __init__(self):
         self.features = [[0] * NODES for _ in range(RETAIN)]
         self.predicted = [[0] * NODES for _ in range(RETAIN)]
@@ -110,7 +110,7 @@ class Server:
         query_generator.start()
         for t in self.threads:
             t.start()
-        for _ in range(2000):
+        for _ in range(1000):
             time.sleep(SLEEP)
             row = self.serverTS
             self.serverTS += 1
