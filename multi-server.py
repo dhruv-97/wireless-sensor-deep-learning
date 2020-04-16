@@ -3,12 +3,18 @@ from threading import Thread, Event
 import time
 import tensorflow as tf
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+test = pd.read_csv("./test.txt")
+test_X = np.array(test.iloc[:, 1:])
+scaler = MinMaxScaler()
+scaler.fit(test_X)
 
 # Multithreaded Python server : TCP Server Socket Program Stub
 PORT = 6572
 BUFFER_SIZE = 20  # Usually 1024, but we need quick response
 NODES = 73
-RETAIN = 100
+RETAIN = 1000
 SLEEP = 1
 ALPHA = 0.7
 event = Event()
@@ -39,7 +45,8 @@ class Server:
                     break
                 self.server.clientTS = max(self.server.clientTS, TS) if TS else 0
                 self.server.features[TS][self.clientNum] = feature
-                self.server.predicted[(TS+1)%RETAIN][self.clientNum] = int(feature * ALPHA + self.server.predicted[TS][self.clientNum] * BETA)
+                if feature:
+                    self.server.predicted[(TS+1)%RETAIN][self.clientNum] = int(feature * ALPHA + self.server.predicted[TS][self.clientNum] * BETA)
             self.conn.close()
 
 
@@ -85,7 +92,10 @@ class Server:
                         self.server.predicted[(self.server.serverTS+1)%RETAIN][i] = self.server.features[self.server.serverTS][i] = self.server.predicted[self.server.serverTS][i]
                         self.server.threads[i].conn.send(str(self.server.clientTS).encode("utf-8"))
                 self.total += 1
-                predictedY = model.predict(np.array([self.server.features[self.server.serverTS][:NODES-1]]).reshape(1,8,9))
+                X_instance = np.array([self.server.features[self.server.serverTS][:NODES-1]]).reshape(1,72).astype(float)
+                X_normal = scaler.transform(X_instance)
+                X_normal = np.nan_to_num(X_normal).reshape(1,8,9)
+                predictedY = model.predict(X_normal)
                 predicted, actual = np.argmax(predictedY[0]), self.server.features[self.server.serverTS][NODES-1]//3
                 if predicted == actual:
                     self.correct += 1

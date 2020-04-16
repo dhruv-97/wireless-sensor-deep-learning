@@ -8,7 +8,7 @@ for filename in glob.glob("Processed/*.txt"):
     df = pd.read_csv(filename, sep=',', header = None, index_col=None)
     li.append(df)
 frame = pd.concat(li, axis = 0, ignore_index=True)
-train, test = train_test_split(frame, test_size=0.2)
+train, test = train_test_split(frame, test_size=0.7)
 import numpy as np
 train_X = np.array(train.iloc[:, 1:])
 train_Y = np.array(train.iloc[:, 0])
@@ -28,12 +28,15 @@ test_X_normalized = np.nan_to_num(test_X_normalized)
 train_Y = train_Y//3
 test_Y = test_Y//3
 model = models.Sequential()
-model.add(layers.Dense(36, activation='relu'))
-model.add(layers.Dense(10)) #Replace 10 by 30 if doing for 30 classes
+model.add(layers.Dense(144, activation='relu'))
+model.add(layers.Dense(300, activation='relu'))
+model.add(layers.Dense(150, activation='relu'))
+model.add(layers.Dense(50, activation='relu'))
+model.add(layers.Dense(10, activation='softmax')) #Replace 10 by 30 if doing for 30 classes
 model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
-history = model.fit(train_X_normalized, train_Y, validation_split = 0.3, epochs=10)
+history = model.fit(train_X_normalized, train_Y, validation_split = 0.4, epochs=4)
 model.save('./saved_model/bp-model')
 test_loss, test_acc = model.evaluate(test_X_normalized,  test_Y, verbose=2)
 

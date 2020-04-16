@@ -13,7 +13,7 @@ for filename in glob.glob("Processed/*.txt"):
     df = pd.read_csv(filename, sep=',', header = None, index_col=None)
     li.append(df)
 frame = pd.concat(li, axis = 0, ignore_index=True)
-train, test = train_test_split(frame, test_size=0.75)
+train, test = train_test_split(frame, test_size=0.7)
 import numpy as np
 train_X = np.array(train.iloc[:, 1:])
 train_Y = np.array(train.iloc[:, 0])
@@ -39,11 +39,11 @@ model.add(layers.Conv1D(200, 3, activation='relu', input_shape=(8, 9)))
 model.add(layers.MaxPool1D())
 model.add(layers.Flatten())
 model.add(layers.Dense(64, activation='relu'))
-model.add(layers.Dense(10)) #Replace 10 by 30 if doing for 30 classes
+model.add(layers.Dense(10, activation='softmax')) #Replace 10 by 30 if doing for 30 classes
 model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
-history = model.fit(train_X_normalized, train_Y, epochs=2, callbacks=[cp_callback])
+history = model.fit(train_X_normalized, train_Y, epochs=3, callbacks=[cp_callback])
 model.save('./saved_model/cnn-model-2')
 test_loss, test_acc = model.evaluate(test_X_normalized,  test_Y, verbose=2)
 print('\nTest accuracy:', test_acc)

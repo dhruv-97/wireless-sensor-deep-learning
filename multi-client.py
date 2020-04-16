@@ -11,7 +11,7 @@ host = socket.gethostbyname(sys.argv[1])
 # crashed = sys.argv[2]
 port = 6572
 BUFFER_SIZE = 20
-RETAIN = 100
+RETAIN = 1000
 
 class Client:
     class ClientThread(threading.Thread):
@@ -85,8 +85,8 @@ class Client:
         f = open(
             "./test.txt")
         for j, line in enumerate(f):
-            self.data = [x for x in line.split(",")]
-            self.data[0], self.data[self.NODES-1] = self.data[self.NODES-1], self.data[0]
+            data = [x for x in line.split(",")]
+            self.data = data[1:] + [data[0]]
             b.wait()
             if self.exit:
                 break
