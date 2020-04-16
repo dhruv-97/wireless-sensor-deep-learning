@@ -84,7 +84,7 @@ class Server:
             self.correct = 0
 
         def run(self):
-            time.sleep(0.5)
+            time.sleep(SLEEP/2)
             for _ in range(1000):
                 time.sleep(SLEEP)
                 for i,x in enumerate(self.server.features[self.server.serverTS]):
@@ -94,7 +94,7 @@ class Server:
                 self.total += 1
                 X_instance = np.array([self.server.features[self.server.serverTS][:NODES-1]]).reshape(1,72).astype(float)
                 X_normal = scaler.transform(X_instance)
-                X_normal = np.nan_to_num(X_normal).reshape(1,8,9)
+                X_normal = np.nan_to_num(X_normal)
                 predictedY = model.predict(X_normal)
                 predicted, actual = np.argmax(predictedY[0]), self.server.features[self.server.serverTS][NODES-1]//3
                 if predicted == actual:
@@ -131,7 +131,6 @@ class Server:
             t.start()
         for _ in range(1000):
             time.sleep(SLEEP)
-            row = self.serverTS
             self.serverTS += 1
             if self.serverTS == RETAIN:
                 self.serverTS = 0
