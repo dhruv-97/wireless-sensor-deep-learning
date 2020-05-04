@@ -117,7 +117,6 @@ class Server:
 
                 # Release time for query generetor and query processing
                 time.sleep(SLEEP/2)
-
                 # Checking for missing values in the row currently being processed
                 for i,x in enumerate(self.server.features[self.server.serverTS]):
                     if not x:
@@ -170,28 +169,44 @@ class Server:
         self.serverTS = 0 # Keeping track of the current row being processes
 
     def start(self):
+        # Waiting to establish connections with 73 clients
         while len(self.threads) < NODES:
             self.soc.listen(NODES)
             print("Multithreaded Python server : Waiting for connections from TCP clients...")
+            # Accepting an indiviual socket connection with a client
             (conn, (ip, port)) = self.soc.accept()
+            # Creating a thread for each socket connection
             self.threads.append(Server.ClientThread(self, conn, ip, port))
-        #self.threads.sort(key=lambda x: x.clientNum)
+
+        # Starting the Clearing Thread
         clear_thread = Server.ClearThread(self.features)
         clear_thread.start()
+
+        # Starting the Query Generetor Thread
         query_generator = Server.QueryGenerator(self)
         query_generator.start()
+
+        # Server has established connection with all clients. Now will send timestamps
         for t in self.threads:
             t.start()
+
+        # Do query processing every second for 1000 test cases
         for _ in range(1000):
             time.sleep(SLEEP)
+
+            # Setting the event to do query processing
             queryEvent.set()
+
+            # Get ready to process the next row
+            self.serverTS += 1
+
+            # Check to see if we have reached the first or second half so that we can activate Clearing Thread
             if self.serverTS == RETAIN:
                 self.serverTS = 0
                 clearEvent.set()
             elif self.serverTS == RETAIN//2:
                 clearEvent.set()
 
-            self.serverTS += 1
         print(query_generator.totalAccuracy())
         for t in self.threads:
             t.join()
